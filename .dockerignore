@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+.pytest_cache
+data
+*.csv
+*.xlsx
+!app/static/example.csv
+*.db
+*.log
+.env*
+tests

@@ -1,0 +1,28 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.env
+.env.*
+data/
+dist/
+build/
+*.db
+*.db-*
+*.sqlite*
+*.log
+# Uploaded spreadsheets stay private. Only synthetic examples belong in Git.
+*.csv
+*.xlsx
+!examples/*.csv
+!examples/*.xlsx
+!app/static/example.csv
+.coverage
+htmlcov/
+# Local assistant configuration and development artifacts
+.agents/
+.codex/
+AGENTS.md
+CLAUDE.md
+.cursor/
+tests/manual_server.py

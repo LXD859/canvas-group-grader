@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>canvas自动化成绩导入</title><link rel="stylesheet" href="/static/theme.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="page-header"><h1>canvas自动化成绩导入</h1></header>
+    <div id="message" role="status" aria-live="polite" hidden></div>
+    <section class="card" id="connection"><div class="section-title"><span class="step">01</span><h2>连接 Canvas</h2><span id="identity" class="muted"></span></div>
+      <form id="connect-form"><div class="grid two"><label>Canvas 站点<input id="base-url" type="url" value="https://oc.sjtu.edu.cn" required></label><label>API Token<input id="token" type="password" autocomplete="off" placeholder="粘贴你的个人访问令牌" required></label></div><div class="actions"><button type="submit" id="connect">连接并读取课程</button><button type="button" id="disconnect" class="secondary" hidden>断开连接</button><span class="hint">Token 只保存在本次服务内存中。</span></div></form>
+      <details><summary>如何获取 Token？</summary><p>在 Canvas「账户 → 设置」中查找「新建访问令牌」。请使用拥有目标课程评分权限的账号。如果学校未开放此入口，请联系课程负责人或 Canvas 管理员。无需将 Token 发给任何人。</p></details>
+    </section>
+    <section class="card" id="workspace" hidden><div class="section-title"><span class="step">02</span><h2>选择作业与批改表</h2></div>
+      <div class="grid two"><label>课程<select id="course"><option value="">请选择课程</option></select></label><label>作业<select id="assignment" disabled><option value="">请先选择课程</option></select></label></div>
+      <div class="file-area"><label for="file">选择 Excel 或 CSV 批改表</label><input id="file" type="file" accept=".csv,.xlsx"><p>每行一个小组，每列一道题。空白题目不扣分；有问题填写 <code>-1.5, Missing justification.</code></p><a href="/static/example.csv" download="example.csv">下载匿名示例 CSV</a></div>
+      <div id="mapping" hidden><div class="grid three"><label>工作表<select id="sheet"></select></label><label>CSV 编码<select id="encoding"><option value="auto">自动识别</option><option value="utf-8-sig">UTF-8</option><option value="gb18030">GB18030</option></select></label><label>小组名称列<select id="group-column"></select></label></div><fieldset><legend>参与计算的题目列</legend><div id="questions" class="checks"></div></fieldset><p id="file-info" class="muted"></p></div>
+      <div class="actions"><button id="preview" disabled>生成预览</button><span class="hint">此步骤只读取 Canvas，不修改成绩。</span></div>
+    </section>
+    <section class="card" id="preview-card" hidden><div class="section-title"><span class="step">03</span><h2>核对并提交</h2><span id="preview-summary" class="pill"></span></div><p class="muted">仅勾选已批改的小组。勾选后，各题全空的小组将获得满分。已有成绩或评语需要修改时，请同时勾选「确认更新」。</p><p class="notice">提交后的可见性遵循 Canvas 当前成绩发布政策；自动发布的作业可能立即向学生显示成绩和评语。</p>
+      <div class="selection-toolbar"><button id="select-all" class="secondary small">一键全选</button><button id="select-none" class="secondary small">取消全选</button><button id="confirm-selected" class="secondary small">确认更新已选小组</button><span class="hint">全选自动跳过错误行</span></div>
+      <div class="table-wrap"><table><thead><tr><th>已批改</th><th>小组 / 成员</th><th>当前成绩</th><th>本次成绩</th><th>拟发送评语</th><th>状态 / 更新</th></tr></thead><tbody id="preview-rows"></tbody></table></div>
+      <div class="actions"><button id="submit" disabled>提交已选小组</button><span id="selection" class="muted">尚未选择小组</span></div>
+    </section>
+    <section class="card" id="job-card" hidden><div class="section-title"><span class="step">04</span><h2>提交结果</h2><span id="job-status" class="pill"></span></div><div id="job-results" aria-live="polite"></div></section>
+    <section class="card" id="history-card" hidden><div class="section-title"><h2>本地提交记录</h2><button id="refresh-history" class="secondary small">刷新</button><button id="clear-history" class="text-button">清除本地记录</button></div><div id="history" class="muted">暂无记录</div><p class="hint">记录仅保存在这台电脑。中断或待核验的批次可重新导入同一文件，在预览中处理；清除记录不会删除 Canvas 成绩。</p></section>
+  </main>
+</body></html>
