@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>作业初评工作台</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script><link rel="stylesheet" href="/static/workspace.css"><link rel="stylesheet" href="/static/liquid-glass.css"><script src="/static/workspace.js" defer></script>
+</head>
+<body>
+<main>
+  <header><h1>作业初评工作台</h1></header>
+  <div id="message" role="status" aria-live="polite" hidden><span id="message-text"></span><button id="jump-review" type="button" hidden>前往未确认项</button></div>
+  <section id="local-output" class="card" hidden><strong>文件也已保存到本机</strong><label id="local-output-label">输出位置<input id="local-output-path" type="text" readonly></label><p class="hint">任务包已自动解压，可复制此文件夹路径交给 Agent。普通导出显示文件路径；浏览器未弹出下载时也可直接使用。</p></section>
+  <div class="intro"><strong>第一次使用？</strong><span>用匿名示例体验任务包、初评导入和复核。所有操作保存在本机，批阅器不会上传成绩。</span><button id="demo" class="secondary">打开匿名演示</button></div>
+  <div class="grid two">
+    <section class="card"><div class="section-head"><h2>连接 Canvas</h2><span id="identity" class="muted">尚未连接</span></div>
+      <form id="connect-form"><label>Canvas 站点<input id="base-url" type="url" value="https://oc.sjtu.edu.cn" required></label><label>Canvas Token<input id="token" type="password" autocomplete="off" required placeholder="仅保存在当前服务内存中"></label><div class="actions"><button type="submit">连接</button><button type="button" id="disconnect" class="secondary">断开</button></div></form>
+      <details><summary>Token 和文件如何保存？</summary><p>在 Canvas「账户 → 设置」创建个人访问令牌。需要读取课程、作业、小组和提交的权限。Token 不写入任务包或本地文件。下载的学生文件和批阅结果保存在本机 data 目录；任务包会包含所选作业原件，请使用课程允许的 AI 服务。</p></details>
+    </section>
+    <section class="card"><h2>开始或继续批阅</h2><div class="grid two"><label>课程<select id="course"><option value="">先连接 Canvas</option></select></label><label>作业<select id="assignment"><option value="">先选择课程</option></select></label></div><button id="create-project">创建批阅项目</button><hr><h3>本机已有项目</h3><p class="hint">双击打开或切换项目；勾选多个项目后可批量删除。也可选中后按 Enter 打开。</p><div id="project-checks" class="project-checklist" aria-label="本机项目列表"></div><div class="actions"><button id="select-projects" class="secondary">全选项目</button><button id="delete-project" class="secondary">删除所选项目</button></div><p class="hint">删除后移入下方项目回收站，可恢复。</p><details><summary>项目回收站</summary><select id="trash-list" hidden></select><div id="trash-checks" class="project-checklist"></div><button id="refresh-projects" class="secondary">全选回收站项目</button><button id="restore-project" class="secondary">恢复项目</button><button id="purge-project" class="secondary">永久删除所选项目</button><p class="hint">这里是批阅器自己的回收站，位于 data/.trash，不是 Windows 回收站。永久删除无法恢复。</p></details></section>
+  </div>
+  <div id="workspace" hidden>
+    <section class="card"><label>批阅方式<select id="grading-mode"><option value="file">导出任务包</option><option value="api">API 自动批阅</option></select></label>
+    <div data-api-mode hidden><h2>模型 API 设置</h2><form id="model-form"><label>服务地址（HTTPS，含 /v1 等服务前缀）<input id="model-address" type="url" required placeholder="https://服务地址/v1"></label><label>视觉模型名称<input id="model-name" required maxlength="200"></label><label>API Key<input id="model-key" type="password" autocomplete="off" required></label><div class="actions"><button type="submit">连接并测试视觉输入</button><button id="model-disconnect" type="button" class="secondary">清除会话密钥</button></div></form><p id="model-status" class="muted">尚未连接模型 API</p><p class="hint">连接测试仅发送合成图片，可能产生少量费用。密钥仅保存在服务会话内存中；重启后重新填写。</p></div></section>
+    <div class="project-banner"><div><p class="eyebrow">当前项目</p><h2 id="project-title"></h2><div class="actions"><input id="project-name" aria-label="项目名称" maxlength="180"><button id="rename-project" class="secondary small">修改名称</button></div><p id="project-meta" class="muted"></p></div><span id="progress" class="badge"></span></div>
+    <section class="card"><div class="section-head"><h2><span class="step">01</span>题目与小组材料</h2><span id="download-status" class="muted"></span></div>
+      <details><summary>作业说明与附件状态</summary><pre id="description"></pre><p id="material-issues" class="notice"></p></details>
+      <div id="materials" class="file-links"></div>
+      <div class="actions"><button id="edit-groups" class="secondary small">调整小组范围</button><button id="update-groups">更新小组选择</button><button id="select-all" class="secondary small">选择全部小组</button><button id="select-none" class="secondary small">取消选择</button><button id="download">下载选中小组及题目</button><span class="muted">更新选择后移除取消小组的本地材料及旧导出包；外部复制的文件需自行清理。</span></div>
+      <div class="table-scroll"><table><thead><tr><th>选择</th><th>小组</th><th>提交次数</th><th>材料状态</th><th>文件 / 操作</th></tr></thead><tbody id="groups"></tbody></table></div>
+      <form id="file-form" class="upload-line"><label>手动补充<select id="file-role"><option value="material">题目材料</option><option value="reference">参考答案</option><option value="submission">小组作业</option></select></label><label>所属小组<select id="file-group"></select></label><label>PDF / PNG / JPEG<input id="material-file" type="file" accept=".pdf,.png,.jpg,.jpeg" multiple required></label><button type="submit" class="secondary">添加文件</button></form>
+    </section>
+    <section class="card"><div class="section-head"><h2><span class="step">02</span>选择题目并准备评分标准</h2><span id="rubric-version" class="muted"></span></div>
+      <p class="muted">先填写你负责的题号（例如 E1,E3），保存后可勾选调整。AI 只生成已选题目的评分标准。</p>
+      <label>负责题号（逗号或空格分隔）<input id="scope-questions" placeholder="例如 E1,E3"></label><div id="question-checks" class="checks"></div><button id="update-questions">更新题目选择</button><div class="actions"><button data-file-mode id="rubric-packet" class="secondary">下载评分标准准备包</button><label data-file-mode class="file-control">导入 rubric.json<input id="rubric-file" type="file" accept=".json"></label><button id="rubric-export" class="secondary">导出标准供同事使用</button></div>
+      <p data-file-mode class="hint">解压准备包后，把文件夹交给 Agent：请阅读 START_HERE.md，生成 rubric.json。导入只填入草案，不会自动确认。</p>
+      <div data-api-mode hidden class="actions"><button id="api-rubric">生成评分标准草案</button></div><div id="rubric-rows"></div><div class="actions"><button id="add-question" class="secondary">添加题目</button><button id="save-rubric">保存并确认评分标准</button><span id="rubric-total" class="muted"></span></div>
+      <p class="hint">修改已确认的标准会创建新版本，旧批阅结果归档，当前题目需要重新确认。</p>
+    </section>
+    <section class="card"><h2><span class="step">03</span>指定题目，准备 AI 批阅任务</h2><p id="task-scope" class="muted"></p>
+      <label>本次额外批阅要求（可选）<textarea id="instructions" rows="4" placeholder="例如：只批选定题目；检查证明过程是否完整；出现连带计算错误时按评分标准处理。"></textarea></label>
+      <div data-file-mode class="actions"><button id="create-task">为选中小组生成任务包</button><span class="muted">不会自动调用 AI 或上传成绩。</span></div>
+      <details data-file-mode open><summary>怎样交给 Codex 或其他 Agent？</summary><p>下载并解压任务包，在 Agent 中选择或提供这个文件夹，发送：<strong>请阅读 START_HERE.md，实际查看作业页面，按要求批阅并保存 results.json。</strong>完成后在下一步导入该文件。任务包只包含所选小组；AI 需要能读取 PDF 或查看渲染后的页面。</p></details>
+      <div data-file-mode id="tasks" class="task-list"></div>
+      <div data-api-mode hidden><label><input id="api-regrade" type="checkbox">重新批阅已人工确认的题目（新增候选，保留历史）</label><button id="api-start">开始批阅</button><p class="hint">默认跳过已人工确认题目。每组最多 100 页／张，完整请求最多 40 MB；超过限制会明确失败，不会删页。</p><div id="api-jobs"></div></div>
+      <section id="api-review-request" hidden><h3>核对本次发送范围</h3><pre id="api-request-summary"></pre><p>所列材料将发送到上述 API 服务，调用可能产生费用。停止后不再发起新请求，正在执行的请求可能仍产生费用。</p><div class="actions"><button id="api-send">确认发送并开始</button><button id="api-cancel" class="secondary">取消</button></div></section>
+    </section>
+    <section class="card"><h2><span class="step">04</span>导入初评与同事的部分表格</h2>
+      <div class="grid two"><form data-file-mode id="result-form"><label>Agent 结果 results.json<input id="result-file" type="file" accept=".json" required></label><div class="actions"><button type="submit">导入初评</button><button type="button" id="sample-results" class="secondary" hidden>下载演示结果</button></div></form>
+      <form id="merge-form"><label>同事的 Excel / CSV<input id="merge-file" type="file" accept=".xlsx,.csv" required></label><fieldset><legend>明确指定这份表已完成的题目</legend><div id="merge-checks" class="checks"></div></fieldset><p class="hint">普通扣分表首列填写小组名，标题可用 Group、文本等。指定题目的空白视为零扣分，部分批阅表中的未批状态会保留。合并后仍需人工确认。</p><button type="submit" class="secondary">合并部分结果</button></form></div>
+    </section>
+    <section class="card"><div class="section-head"><h2><span class="step">05</span>逐题复核</h2><span class="muted">选择候选结果，核对原件后保存确认。</span></div>
+      <div class="grid two"><label>复核小组<select id="review-group"></select></label><label>查看该组原文件<select id="review-file"></select></label></div>
+      <div class="actions"><button id="next-group" class="secondary">下一组</button><span id="group-position" class="muted"></span><button id="confirm-group">确认本组全部题目</button><button id="confirm-all" class="secondary">确认全部已选小组</button><button id="confirm-zero-groups" class="secondary">零扣分小组一键通过</button></div><p class="hint">零扣分一键通过仅处理所选题目均已初评为零、无疑点或冲突的小组；有未保存修改的小组会跳过。切换小组保留本页草稿，保存确认后才写入项目。确认按钮采用当前初评及已填写的修改；未批阅、存在疑点或候选冲突的题目仍需逐题处理。</p><div class="review-layout"><div id="review-questions"></div><div class="document-pane"><p id="preview-label" class="muted">选择文件预览</p><div id="page-controls" class="actions" hidden><button id="previous-page" class="secondary small">上一页</button><span id="page-number"></span><button id="next-page" class="secondary small">下一页</button></div><img id="image-preview" alt="作业原件" hidden><button id="download-original" class="secondary small" hidden>下载原件</button></div></div>
+    </section>
+    <section class="card"><h2><span class="step">06</span>导出与交接</h2><p>导出仅使用已保存的小组和题目范围；范围内的每题均须人工确认，范围外无需复核。</p><div class="actions"><button id="export-review">导出部分批阅表</button><button id="export-xlsx" class="secondary">导出可上传 Excel</button><button id="export-csv" class="secondary">导出可上传 CSV</button><button id="export-audit" class="secondary">导出全部批阅记录</button></div><p class="hint">部分批阅表供同事合并。Excel / CSV 扣分表只含已选题目，学生评语为简短英文。多人分题批阅时，请先合并所有负责人的扣分再上传；上传器会以整份作业满分减去表内扣分计算成绩。全部记录包含历次标准、任务和归档结果，供追溯使用。</p></section>
+  </div>
+
+</main>
+</body></html>
+

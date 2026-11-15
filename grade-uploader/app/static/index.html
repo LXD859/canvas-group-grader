@@ -2,12 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>canvas自动化成绩导入</title><link rel="stylesheet" href="/static/theme.css">
+  <title>Canvas 成绩上传器</title><link rel="stylesheet" href="/static/theme.css">
   <script src="/static/app.js" defer></script>
+<link rel="stylesheet" href="/static/workspace.css"><link rel="stylesheet" href="/static/liquid-glass.css"><script src="/static/workspace.js" defer></script>
 </head>
 <body>
   <main>
-    <header class="page-header"><h1>canvas自动化成绩导入</h1></header>
+    <header class="page-header"><h1>Canvas 成绩上传器</h1><p class="workspace-subtitle">连接课程，核对批改表，将已确认的成绩提交至 Canvas。</p></header>
     <div id="message" role="status" aria-live="polite" hidden></div>
     <section class="card" id="connection"><div class="section-title"><span class="step">01</span><h2>连接 Canvas</h2><span id="identity" class="muted"></span></div>
       <form id="connect-form"><div class="grid two"><label>Canvas 站点<input id="base-url" type="url" value="https://oc.sjtu.edu.cn" required></label><label>API Token<input id="token" type="password" autocomplete="off" placeholder="粘贴你的个人访问令牌" required></label></div><div class="actions"><button type="submit" id="connect">连接并读取课程</button><button type="button" id="disconnect" class="secondary" hidden>断开连接</button><span class="hint">Token 只保存在本次服务内存中。</span></div></form>
@@ -15,7 +16,7 @@
     </section>
     <section class="card" id="workspace" hidden><div class="section-title"><span class="step">02</span><h2>选择作业与批改表</h2></div>
       <div class="grid two"><label>课程<select id="course"><option value="">请选择课程</option></select></label><label>作业<select id="assignment" disabled><option value="">请先选择课程</option></select></label></div>
-      <div class="file-area"><label for="file">选择 Excel 或 CSV 批改表</label><input id="file" type="file" accept=".csv,.xlsx"><p>每行一个小组，每列一道题。空白题目不扣分；有问题填写 <code>-1.5, Missing justification.</code></p><a href="/static/example.csv" download="example.csv">下载匿名示例 CSV</a></div>
+      <div class="file-area"><label for="file">选择 Excel 或 CSV 批改表</label><input id="file" type="file" accept=".csv,.xlsx"><p>每行一个小组，每列一道题。纯文字评论不扣分；扣分可写 <code>-1.5, Missing justification.</code> 或 <code>-1 for ii</code>。同格多笔扣分累加，评语按列题号分段保留原文。单独数字需要补充说明。</p><a href="/static/example.csv" download="example.csv">下载匿名示例 CSV</a></div>
       <div id="mapping" hidden><div class="grid three"><label>工作表<select id="sheet"></select></label><label>CSV 编码<select id="encoding"><option value="auto">自动识别</option><option value="utf-8-sig">UTF-8</option><option value="gb18030">GB18030</option></select></label><label>小组名称列<select id="group-column"></select></label></div><fieldset><legend>参与计算的题目列</legend><div id="questions" class="checks"></div></fieldset><p id="file-info" class="muted"></p></div>
       <div class="actions"><button id="preview" disabled>生成预览</button><span class="hint">此步骤只读取 Canvas，不修改成绩。</span></div>
     </section>

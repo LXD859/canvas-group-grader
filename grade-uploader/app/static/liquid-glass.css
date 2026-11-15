@@ -1,0 +1,94 @@
+
+/* Web material inspired by QWEA0/Liquid-Glass-Android (MIT).
+   CSS approximation: backdrop blur and edge lighting, not the native SDF shader. */
+:root { --glass-accent: #3559d9; --glass-glow: #d9e5ff; --muted: #586980; }
+html { min-height: 100%; background: #edf2f9; }
+body {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 6% 5%, #cddfff 0, transparent 48%),
+    radial-gradient(ellipse at 94% 30%, #d6eee7 0, transparent 45%),
+    radial-gradient(ellipse at 45% 95%, #e3dcf5 0, transparent 52%), #edf2f9;
+  background-attachment: fixed;
+}
+main { position: relative; }
+header { padding: 12px 4px 8px; }
+h1 { color: #22344e; letter-spacing: -.8px; }
+.card, #history-card, .intro, .project-banner {
+  background: linear-gradient(145deg, #ffffffd9, #ffffff9c);
+  border: 1px solid #ffffffed;
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #ffffff80,
+    0 12px 36px #344e7710, 0 2px 5px #344e7708;
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+}
+.project-banner { padding: 20px 24px; margin-bottom: 22px; }
+.intro { background: linear-gradient(120deg, #effff9da, #ffffffa6); }
+input:not([type=checkbox]), select, textarea {
+  background: #ffffffbd; border-color: #bccbdc; border-radius: 11px;
+  box-shadow: inset 0 2px 4px #344e7705; transition: border-color .18s, box-shadow .18s;
+}
+input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 3px solid #7595df; outline-offset: 3px;
+}
+button {
+  border-radius: 12px; border: 1px solid #ffffff55;
+  background: linear-gradient(160deg, #5277eb, #3559c9); color: white;
+  box-shadow: inset 0 1px 0 #ffffff65, 0 4px 10px #3559c926;
+  transition: transform .16s, box-shadow .16s, filter .16s;
+}
+button:hover:not(:disabled) { background: linear-gradient(160deg, #6083ef, #3559c9); filter: brightness(1.03); box-shadow: inset 0 1px 0 #ffffff80, 0 6px 16px #3559c933; }
+button:active:not(:disabled) { transform: scale(.97); }
+button.secondary, .secondary, input::file-selector-button {
+  background: linear-gradient(150deg, #ffffffeb, #edf3fcc9); color: #354f74;
+  border: 1px solid #c6d3e4; box-shadow: inset 0 1px 0 white, 0 2px 6px #344e7709;
+}
+button.secondary:hover:not(:disabled), .secondary:hover { background: #f7faff; }
+button.text-button { background: transparent; color: #785260; box-shadow: none; border-color: transparent; }
+button:disabled { box-shadow: none; }
+.step, .pill, .badge { background: #e8effacc; color: #3b567e; border: 1px solid #ffffffd9; border-radius: 10px; box-shadow: inset 0 1px 0 white; }
+.badge { border-radius: 999px; }
+.file-area { background: #f5f9ff99; border-color: #aabbda; border-radius: 15px; }
+fieldset, .table-wrap, .document-pane, .review-card { border-radius: 13px; border-color: #ced9e7; }
+.table-wrap, .table-scroll { background: #ffffffa6; border-radius: 13px; }
+th { background: #eaf0f8; color: #465c77; }
+tbody tr:hover { background: #edf3fc; }
+.document-pane, .review-card { background: #ffffffbf; }
+.candidate { background: #edf3f8; border-radius: 9px; }
+.muted, .hint, .subtitle { color: #586980; }
+#message { box-shadow: 0 6px 20px #344e7715; border-radius: 13px; }
+@supports not (backdrop-filter: blur(1px)) {
+  .card, #history-card, .intro, .project-banner { background: #f9fbfe; }
+}
+@media (max-width: 720px) {
+  .card, #history-card { border-radius: 17px; }
+  .project-banner { padding: 16px; flex-wrap: wrap; }
+  body { background-attachment: scroll; }
+}
+@media (prefers-reduced-motion: reduce) {
+  button, input, select, textarea { transition: none; }
+  button:active:not(:disabled) { transform: none; }
+}
+@media (prefers-contrast: more) {
+  .card, #history-card, .intro, .project-banner { background: white; backdrop-filter: none; border-color: #536780; }
+  .muted, .hint, .subtitle { color: #34465c; }
+}
+
+/* Preserve the approved iridescent palette across the workflow navigation. */
+:root { --accent:#3559d9; --ink:#22344e; --border:#dce3ef; --muted:#586980; color:var(--ink); }
+.workspace-nav { background:linear-gradient(155deg,#e0eaffb8,#eee5fa9c 60%,#e0f3edb3); border-color:#ffffffcf; -webkit-backdrop-filter:blur(22px) saturate(140%); backdrop-filter:blur(22px) saturate(140%); }
+.workspace-brand, h2 { color:#22344e; }
+.workspace-nav a { color:#465d7c; }
+.workspace-nav a[aria-current] { color:#3559c9; background:linear-gradient(135deg,#ffffffed,#edf2ffcc); border-color:#ffffffed; box-shadow:inset 0 1px 0 white,0 4px 14px #3559c912; }
+.workspace-nav a:hover { background:#ffffffb3; }
+.workspace-nav p,.workspace-nav .nav-note,.workspace-subtitle { color:#586980; }
+header,.page-header,.section-title,.section-head { border-color:#dce3ef; }
+label { color:#465d77; }
+input:not([type=checkbox]),select,textarea { color:#22344e; }
+.intro span { color:#526980; }
+.score { color:#3559c9; }
+a { color:#3559d9; }
+details { color:#586980; }
+summary { color:#465d7c; }
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible,summary:focus-visible { outline-color:#7595df; }
+@media(prefers-contrast:more) { .workspace-nav { background:#edf2fa; backdrop-filter:none; } }

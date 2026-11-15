@@ -1,0 +1,4 @@
+"""Shared attachment and task-package size limits (bytes)."""
+MAX_ATTACHMENT_BYTES = 200 * 1024 * 1024
+MAX_UPLOAD_REQUEST_BYTES = MAX_ATTACHMENT_BYTES + 2 * 1024 * 1024
+MAX_PACKET_BYTES = 1024 * 1024 * 1024

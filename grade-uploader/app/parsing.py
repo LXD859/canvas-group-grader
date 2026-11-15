@@ -12,7 +12,10 @@ from openpyxl.utils import get_column_letter
 MAX_BYTES = 10 * 1024 * 1024
 MAX_ROWS = 5000
 MAX_COLS = 200
-DEDUCTION = re.compile(r"^[-−–—﹣－]\s*(\d+(?:\.\d+)?|\.\d+)\s*[,，]\s*(\S[\s\S]*)$")
+DEDUCTION_START = re.compile(r"(?:^|(?<=[;；,，\n\r]))[^\S\r\n]*[-−–—﹣－]\s*(?=[\d.]|NaN|Inf)", re.IGNORECASE)
+DEDUCTION = re.compile(r"(\d+(?:\.\d+)?|\.\d+)(?=\s|[,，]|$)")
+REASON = re.compile(r"(?:\s*[,，]\s*|\s+for\s+)(.*)", re.IGNORECASE | re.DOTALL)
+BARE_NUMBER = re.compile(r"[+＋−–—﹣－-]?\s*(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?")
 
 
 class InputError(ValueError):
@@ -92,6 +95,42 @@ def read_table(filename, content, sheet=None, encoding="auto"):
     return {"sheets": sheets, "sheet": selected, "headers": headers, "rows": rows[1:]}
 
 
+def parse_deduction(raw):
+    if re.fullmatch(r"(?:not submitted|未提交)[.!。]?", raw, re.IGNORECASE):
+        raise InputError("未提交但没有注明扣分，请填写明确扣分金额。")
+    raw = re.sub(r"^([-−–—﹣－]\s*\d+(?:\.\d+)?)[：:]", r"\1,", raw)
+    raw = re.sub(r"([-−–—﹣－]\s*\d+(?:\.\d+)?)\s+\((\d+)\)\s*[,，]", r"\1 for part \2,", raw)
+    raw = re.sub(r"\bfor\s+(\d+)", r"for part \1", raw)
+    def expand_each(match):
+        amount, first, second = match.groups()
+        return f"-{amount} for missing {first}); -{amount} for missing {second})"
+    raw = re.sub(r"[-−–—﹣－](\d+(?:\.\d+)?)\s+each for missing\s+([ivx]+)\)\s+and\s+([ivx]+)\)", expand_each, raw, flags=re.IGNORECASE)
+    if raw.startswith("="):
+        raise InputError("不能使用公式，请填写评论原文。")
+    if BARE_NUMBER.fullmatch(raw):
+        raise InputError("单独数字的含义待确认，请补充扣分说明或改为文字评论。")
+    starts = [match for match in DEDUCTION_START.finditer(raw)
+              if match.start() == 0 or not re.match(r"\d+(?:\.\d+)?\s*[)}\]]", raw[match.end():])]
+    if len(starts) > 1 and re.search(r"\b(total|overall deduction)\b|总扣分|合计扣", raw, re.IGNORECASE):
+        raise InputError("总扣分与多笔负数分项同时出现，请保留总扣分并将分项金额写为正数。")
+    if not starts:
+        if re.match(r"^[+＋]?\s*(?:\d|\.\d)", raw):
+            raise InputError("以数字开头的内容含义待确认；扣分请使用 -1, 原因 或 -1 for ii...。")
+        return Decimal(0)
+    total = Decimal(0)
+    for position, start in enumerate(starts):
+        end = starts[position + 1].start() if position + 1 < len(starts) else len(raw)
+        entry = raw[start.end():end].rstrip(" \t\r\n;；,，")
+        amount = DEDUCTION.match(entry)
+        if not amount or len(amount.group(1)) > 24:
+            raise InputError("扣分数字无法识别，请使用 -1.5, 原因 或 -1.5 for ii...。")
+        reason = REASON.fullmatch(entry[amount.end():])
+        if not reason or not any(character.isalpha() for character in reason.group(1)):
+            raise InputError("扣分条目缺少明确说明，请使用 -1.5, 原因 或 -1.5 for ii...。")
+        total += Decimal(amount.group(1))
+    return total
+
+
 def calculate_rows(table, group_column, question_columns, maximum):
     maximum = number(maximum)
     width = len(table["headers"])
@@ -125,18 +164,19 @@ def calculate_rows(table, group_column, question_columns, maximum):
                 if not raw:
                     items.append({"question": label, "deduction": "0", "raw": "", "cell": coordinate})
                     continue
-                match = DEDUCTION.fullmatch(raw)
-                if not match or len(match.group(1)) > 24:
-                    errors.append(f"{coordinate}（{label}）：请使用 -1.5, English reason 格式。")
+                comments.append(f"{label}：\n{raw}")
+                try:
+                    deduction = parse_deduction(raw)
+                except InputError as exc:
+                    errors.append(f"{coordinate}（{label}）：{exc}")
+                    items.append({"question": label, "deduction": None, "raw": raw, "cell": coordinate})
                     continue
-                deduction = Decimal(match.group(1))
                 total += deduction
                 items.append({"question": label, "deduction": str(deduction), "raw": raw, "cell": coordinate})
-                comments.append(f"{label}: {raw}")
             score = maximum - total
         if score < 0:
             errors.append("累计扣分超过作业满分。")
-        comment = "\n".join(comments)
+        comment = "\n\n".join(comments)
         if len(comment) > 16000:
             errors.append("合并评语超过 16000 字符。")
         results.append({"row": row_number, "name": name, "items": items,

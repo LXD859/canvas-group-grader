@@ -17,6 +17,14 @@ build/
 !examples/*.csv
 !examples/*.xlsx
 !app/static/example.csv
+!grade-uploader/app/static/example.csv
+!ai-grader/examples/*.csv
+!ai-grader/examples/*.xlsx
+*.zip
+*.pdf
+*.png
+*.jpg
+*.jpeg
 .coverage
 htmlcov/
 # Local assistant configuration and development artifacts
@@ -26,3 +34,6 @@ AGENTS.md
 CLAUDE.md
 .cursor/
 tests/manual_server.py
+
+# Local exports and browser test profiles
+outputs/

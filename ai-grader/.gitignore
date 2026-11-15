@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+data/
+dist/
+.env*
+*.log
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.xlsx
+*.csv
+*.zip

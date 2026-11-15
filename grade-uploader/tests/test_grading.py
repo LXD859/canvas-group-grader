@@ -30,6 +30,41 @@ def test_group_write_and_repeat_import(gateway, store):
     assert len(gateway.grade_calls) == 2 and len(gateway.comment_calls) == 1
 
 
+def test_full_marks_feedback_and_repeat_import(gateway, store):
+    body = 'Group,E1,E2\nAssignment Group 1,Please add a citation.,\n'
+    value = preview(gateway, body)
+    assert value["rows"][0]["score"] == "10"
+    assert run(gateway, store, value)["status"] == "done"
+    assert gateway.comment_calls == [(1, "E1：\nPlease add a citation.")]
+    assert gateway.data["submissions"]["1"]["score"] == gateway.data["submissions"]["2"]["score"] == 10
+    assert run(gateway, store, preview(gateway, body))["status"] == "done"
+    assert len(gateway.grade_calls) == len(gateway.comment_calls) == 1
+
+
+def test_old_format_requires_confirmation_and_preserves_history(gateway, store):
+    old = {"id": 80, "author_id": gateway.user_id, "comment": "E1: -1.5, Reason."}
+    for member in ("1", "2"):
+        gateway.data["submissions"][member].update(score=8.5, comments=[copy.deepcopy(old)])
+    value = preview(gateway)
+    assert value["rows"][0]["needs_update"]
+    with pytest.raises(InputError):
+        selected_rows(value, [2], [])
+    assert run(gateway, store, value, [2])["status"] == "done"
+    comments = gateway.data["submissions"]["1"]["comments"]
+    assert [entry["comment"] for entry in comments] == [old["comment"], "E1：\n-1.5, Reason."]
+    assert not gateway.grade_calls
+    assert run(gateway, store, preview(gateway), [2])["status"] == "done"
+    assert len(gateway.comment_calls) == 1
+
+
+def test_ambiguous_number_kept_in_preview_and_blocked(gateway):
+    value = preview(gateway, 'Group,E1,E2\nAssignment Group 1,,2\n')
+    assert value["rows"][0]["comment"] == "E2：\n2"
+    assert "C2" in value["rows"][0]["errors"][0]
+    with pytest.raises(InputError):
+        selected_rows(value, [2], [2])
+
+
 @pytest.mark.parametrize("change", ["score", "membership", "maximum", "comment"])
 def test_stale_preview_no_write(gateway, store, change):
     value = preview(gateway)
